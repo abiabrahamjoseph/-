@@ -134,7 +134,7 @@ function applyState(data) {
 function createNode(type, x, y, label) {
     const id = `node-${Date.now()}`;
     const node = { id, type, x: snap(x), y: snap(y), width: 160, height: 60, label };
-    if (type === 'decision') { node.width = 100; node.height = 100; }
+    if (type === 'decision') { node.width = 160; node.height = 120; }
     else if (type === 'lead-source') { node.width = 180; node.height = 44; }
     nodes.push(node);
     return node;
@@ -192,11 +192,30 @@ function renderNodes() {
             shape.setAttribute("class", "node-rect");
         }
 
-        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", node.width / 2);
-        text.setAttribute("y", node.height / 2 + 5);
-        text.setAttribute("class", "node-text");
-        text.textContent = node.label;
+        let fX = 0, fY = 0, fW = node.width, fH = node.height;
+        if (node.type === 'decision') {
+            fX = node.width * 0.25;
+            fY = node.height * 0.25;
+            fW = node.width * 0.5;
+            fH = node.height * 0.5;
+        }
+
+        const foreign = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+        foreign.setAttribute("x", fX);
+        foreign.setAttribute("y", fY);
+        foreign.setAttribute("width", fW);
+        foreign.setAttribute("height", fH);
+        foreign.setAttribute("pointer-events", "none");
+
+        const div = document.createElement("div");
+        div.setAttribute("class", `node-text-container ${node.type}`);
+
+        const span = document.createElement("span");
+        span.setAttribute("class", "node-text-content");
+        span.textContent = node.label;
+
+        div.appendChild(span);
+        foreign.appendChild(div);
 
         // Interactive Icons (Grouped for better hit area)
         const createIconButton = (x, y, type, callback) => {
@@ -237,7 +256,7 @@ function renderNodes() {
         resBtn.setAttribute("class", "resize-handle");
         resBtn.onmousedown = (e) => { e.stopPropagation(); startResizing(e, node); };
 
-        g.append(shape, text, delBtn, editBtn, resBtn);
+        g.append(shape, foreign, delBtn, editBtn, resBtn);
 
         g.onmousedown = (e) => {
             if (e.target.closest('.icon-hitbox')) return; // Extra safety
@@ -402,10 +421,23 @@ function openNodeEditor(node) {
 
     // Zoom-aware positioning
     const rect = canvas.getBoundingClientRect();
-    nodeEditor.style.left = `${rect.left + node.x * state.zoom}px`;
-    nodeEditor.style.top = `${rect.top + (node.y + node.height / 2 - 15) * state.zoom}px`;
-    nodeEditor.style.width = `${Math.max(100, node.width * state.zoom)}px`;
-    nodeEditor.style.height = `${Math.max(24, 30 * state.zoom)}px`;
+
+    let editX = node.x;
+    let editY = node.y;
+    let editW = node.width;
+    let editH = node.height;
+
+    if (node.type === 'decision') {
+        editX += node.width * 0.25;
+        editY += node.height * 0.25;
+        editW = node.width * 0.5;
+        editH = node.height * 0.5;
+    }
+
+    nodeEditor.style.left = `${rect.left + editX * state.zoom}px`;
+    nodeEditor.style.top = `${rect.top + editY * state.zoom}px`;
+    nodeEditor.style.width = `${editW * state.zoom}px`;
+    nodeEditor.style.height = `${editH * state.zoom}px`;
     nodeEditor.style.fontSize = `${Math.max(12, 13 * state.zoom)}px`;
 
     setTimeout(() => {
@@ -486,8 +518,12 @@ function setupKeyboardShortcuts() {
         el.onblur = closeEditors;
         el.onkeydown = (ev) => {
             if (ev.key === 'Enter') {
-                ev.preventDefault();
-                closeEditors();
+                // If it's the node editor and shift is NOT held, save.
+                // If shift IS held, let the default textarea newline happen.
+                if (el.id === 'edge-editor' || !ev.shiftKey) {
+                    ev.preventDefault();
+                    closeEditors();
+                }
             }
             if (ev.key === 'Escape') {
                 state.editingItem = null; // Don't save on Escape
