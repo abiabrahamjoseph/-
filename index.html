@@ -6,103 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlowMaker Pro X | Definitive Diagramming</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Modern Typography: Plus Jakarta Sans & Outfit -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-<body class="light-theme">
+<body class="dark-theme">
     <div class="app-container">
-        <!-- Unified Sidebar HUD -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h1>flowmaker<span>X</span></h1>
-            </div>
 
-            <div class="tool-section">
-                <h3>Project Information</h3>
-                <input type="text" id="project-name-input" class="sidebar-input" placeholder="Project Name..."
-                    value="My Flowchart">
-            </div>
-
-            <div class="tool-section">
-                <h3>Nodes</h3>
-                <div class="node-palette">
-                    <div class="palette-item" draggable="true" data-type="lead-source">
-                        <i data-lucide="plus-circle"></i>
-                        <span>Source</span>
-                    </div>
-                    <div class="palette-item" draggable="true" data-type="action">
-                        <i data-lucide="box"></i>
-                        <span>Process</span>
-                    </div>
-                    <div class="palette-item" draggable="true" data-type="decision">
-                        <i data-lucide="diamond"></i>
-                        <span>Decision</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tool-section">
-                <h3>Interactions</h3>
-                <div class="node-palette">
-                    <div class="palette-item" id="connector-tool">
-                        <i data-lucide="git-branch"></i>
-                        <span>Link Tool</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="sidebar-footer">
-                <div class="tool-section">
-                    <h3>workspace Settings</h3>
-                    <div class="node-palette">
-                        <div class="palette-item" id="theme-toggle">
-                            <i data-lucide="sun"></i>
-                            <span>Switch Theme</span>
-                        </div>
-                        <div class="palette-item" id="clear-btn">
-                            <i data-lucide="refresh-cw"></i>
-                            <span>Clear Workspace</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="footer-actions">
-                    <button id="save-project-btn" class="btn btn-save-prominent">
-                        <i data-lucide="save"></i> Save My Project
-                    </button>
-                    <div class="export-grid">
-                        <button id="export-pdf-btn" class="btn btn-secondary">
-                            <i data-lucide="file-text"></i> PDF
-                        </button>
-                        <button id="export-btn" class="btn btn-primary">
-                            <i data-lucide="download"></i> PNG
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main HUD Workspace -->
+        <!-- Main Fullscreen Workspace -->
         <main class="workspace">
-            <div class="floating-ui-panels">
-                <div class="floating-controls HUD-pill">
-                    <button id="undo-btn" title="Undo (Ctrl+Z)"><i data-lucide="undo-2"></i></button>
-                    <button id="redo-btn" title="Redo (Ctrl+Y)"><i data-lucide="redo-2"></i></button>
-                    <div class="divider"></div>
-                    <button id="zoom-out"><i data-lucide="minus"></i></button>
-                    <span id="zoom-level">100%</span>
-                    <button id="zoom-in"><i data-lucide="plus"></i></button>
-                    <div class="divider"></div>
-                    <button id="reset-view"><i data-lucide="maximize"></i></button>
-                </div>
-            </div>
 
+            <!-- Dynamic Grid Canvas Layer -->
             <div class="canvas-wrapper" id="canvas-container" tabindex="0">
                 <svg id="flow-canvas" class="flow-canvas" width="100%" height="100%">
                     <defs>
-                        <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
-                            <polygon points="0 0, 6 2, 0 4" fill="currentColor" />
+                        <!-- Sleek glowing arrowhead -->
+                        <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                            <polygon points="0 0, 8 3, 0 6" fill="currentColor" />
                         </marker>
                     </defs>
                     <g id="edges-layer"></g>
@@ -115,21 +38,89 @@
                 <input type="text" id="edge-editor" class="node-editor" style="display: none;">
             </div>
 
-            <!-- Status Bar -->
-            <footer class="status-bar">
-                <div class="status-left">
-                    <span id="node-count">0 NODES</span>
+            <!-- Floating UI Top Dock (Branding & Global Actions) -->
+            <header class="hud-top-bar glass-panel">
+                <div class="hud-brand">
+                    <div class="logo-orb"></div>
+                    <h1>flowmaker<span>X</span></h1>
                 </div>
-                <div class="status-right">
-                    <span><kbd>SPACE</kbd> PAN</span>
-                    <span><kbd>DEL</kbd> DELETE</span>
-                    <span><kbd>CTRL + S</kbd> SAVE</span>
+
+                <div class="hud-project-info">
+                    <input type="text" id="project-name-input" class="hud-input" placeholder="Project Name..."
+                        value="My Flowchart">
+                </div>
+
+                <div class="hud-global-actions">
+                    <button class="btn-icon" id="theme-toggle" title="Switch Theme"><i data-lucide="sun"></i></button>
+                    <button class="btn-icon danger" id="clear-btn" title="Clear Workspace"><i
+                            data-lucide="trash-2"></i></button>
+                    <div class="divider-vertical"></div>
+                    <button id="save-project-btn" class="btn-glow-primary">
+                        <i data-lucide="save"></i> <span>Save</span>
+                    </button>
+                    <button id="export-pdf-btn" class="btn-subtle" title="Export PDF">
+                        <i data-lucide="file-text"></i>
+                    </button>
+                    <button id="export-btn" class="btn-subtle" title="Export PNG">
+                        <i data-lucide="image"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Floating UI Left Dock (Tools) -->
+            <aside class="hud-left-dock glass-panel">
+                <div class="tool-group">
+                    <span class="tool-label">Nodes</span>
+                    <div class="palette-grid">
+                        <div class="palette-item" draggable="true" data-type="lead-source" title="Source Node">
+                            <div class="icon-wrap source-wrap"><i data-lucide="plus-circle"></i></div>
+                        </div>
+                        <div class="palette-item" draggable="true" data-type="action" title="Process Node">
+                            <div class="icon-wrap process-wrap"><i data-lucide="box"></i></div>
+                        </div>
+                        <div class="palette-item" draggable="true" data-type="decision" title="Decision Node">
+                            <div class="icon-wrap decision-wrap"><i data-lucide="diamond"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider-horizontal"></div>
+
+                <div class="tool-group">
+                    <span class="tool-label">Link</span>
+                    <div class="palette-item connector-tool-mode" id="connector-tool" title="Link Nodes">
+                        <div class="icon-wrap link-wrap"><i data-lucide="git-branch"></i></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Floating UI Bottom Center Dock (View Controls) -->
+            <div class="hud-bottom-dock glass-panel">
+                <button class="btn-icon" id="undo-btn" title="Undo"><i data-lucide="undo-2"></i></button>
+                <button class="btn-icon" id="redo-btn" title="Redo"><i data-lucide="redo-2"></i></button>
+                <div class="divider-vertical"></div>
+                <button class="btn-icon" id="zoom-out"><i data-lucide="minus"></i></button>
+                <span id="zoom-level" class="badge-text">100%</span>
+                <button class="btn-icon" id="zoom-in"><i data-lucide="plus"></i></button>
+                <div class="divider-vertical"></div>
+                <button class="btn-icon" id="reset-view"><i data-lucide="maximize"></i></button>
+            </div>
+
+            <!-- Floating Status Indicator -->
+            <footer class="hud-status">
+                <div class="status-pill">
+                    <i data-lucide="layers"></i> <span id="node-count">0 NODES</span>
+                </div>
+                <div class="status-hints">
+                    <span><kbd>SPACE</kbd>+Drag to Pan</span>
+                    <span><kbd>DEL</kbd> Delete</span>
                 </div>
             </footer>
         </main>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/3.1.5/dom-to-image-more.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="app.js"></script>
 </body>
