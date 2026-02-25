@@ -178,12 +178,14 @@ function renderNodes() {
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("class", `node-group ${state.selectedId === node.id ? 'selected' : ''}`);
         g.setAttribute("transform", `translate(${node.x}, ${node.y})`);
+        g.setAttribute("data-node-type", node.type);
 
         let shape;
         if (node.type === 'decision') {
             shape = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-            const s = node.width / 2;
-            shape.setAttribute("points", `0,${s} ${s},0 ${s * 2},${s} ${s},${s * 2}`);
+            const hw = node.width / 2;
+            const hh = node.height / 2;
+            shape.setAttribute("points", `0,${hh} ${hw},0 ${node.width},${hh} ${hw},${node.height}`);
             shape.setAttribute("class", "node-diamond");
         } else {
             shape = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -194,10 +196,10 @@ function renderNodes() {
 
         let fX = 0, fY = 0, fW = node.width, fH = node.height;
         if (node.type === 'decision') {
-            fX = node.width * 0.25;
-            fY = node.height * 0.25;
-            fW = node.width * 0.5;
-            fH = node.height * 0.5;
+            fX = node.width * 0.15;
+            fY = node.height * 0.15;
+            fW = node.width * 0.7;
+            fH = node.height * 0.7;
         }
 
         const foreign = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
@@ -206,16 +208,19 @@ function renderNodes() {
         foreign.setAttribute("width", fW);
         foreign.setAttribute("height", fH);
         foreign.setAttribute("pointer-events", "none");
+        foreign.setAttribute("class", "node-foreign-object");
 
         const div = document.createElement("div");
         div.setAttribute("class", `node-text-container ${node.type}`);
 
-        const span = document.createElement("span");
-        span.setAttribute("class", "node-text-content");
-        span.textContent = node.label;
+        const textDiv = document.createElement("div");
+        textDiv.setAttribute("class", "node-text-content");
+        textDiv.textContent = node.label;
 
-        div.appendChild(span);
+        div.appendChild(textDiv);
         foreign.appendChild(div);
+
+        // Text selection/editing is handled via node dblclick now
 
         // Interactive Icons (Grouped for better hit area)
         const createIconButton = (x, y, type, callback) => {
@@ -251,6 +256,9 @@ function renderNodes() {
         const editBtn = createIconButton(20, 20, 'edit', () => {
             openNodeEditor(node);
         });
+
+        // Edit button is visible on hover (handled via CSS)
+
         const resBtn = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         resBtn.setAttribute("cx", node.width - 6); resBtn.setAttribute("cy", node.height - 6); resBtn.setAttribute("r", 7);
         resBtn.setAttribute("class", "resize-handle");
@@ -266,7 +274,12 @@ function renderNodes() {
             else startDragging(e, node);
             render();
         };
-        g.ondblclick = (e) => openNodeEditor(node);
+
+        // Double click anywhere on the node to edit instantly
+        g.ondblclick = (e) => {
+            e.stopPropagation();
+            openNodeEditor(node);
+        };
 
         nodesLayer.appendChild(g);
     });
@@ -415,6 +428,7 @@ function finalizeConnection(e) {
 function openNodeEditor(node) {
     if (state.editingItem && state.editingItem.id === node.id) return;
     closeEditors();
+    state.selectedId = node.id;
     state.editingItem = { type: 'node', id: node.id };
     nodeEditor.style.display = 'block';
     nodeEditor.value = node.label;
@@ -428,39 +442,53 @@ function openNodeEditor(node) {
     let editH = node.height;
 
     if (node.type === 'decision') {
-        editX += node.width * 0.25;
-        editY += node.height * 0.25;
-        editW = node.width * 0.5;
-        editH = node.height * 0.5;
+        editX += node.width * 0.15;
+        editY += node.height * 0.15;
+        editW = node.width * 0.7;
+        editH = node.height * 0.7;
     }
 
     nodeEditor.style.left = `${rect.left + editX * state.zoom}px`;
     nodeEditor.style.top = `${rect.top + editY * state.zoom}px`;
     nodeEditor.style.width = `${editW * state.zoom}px`;
-    nodeEditor.style.height = `${editH * state.zoom}px`;
-    nodeEditor.style.fontSize = `${Math.max(12, 13 * state.zoom)}px`;
+
+    // Let height auto-expand based on content, min height is initial height
+    nodeEditor.style.minHeight = `${editH * state.zoom}px`;
+    nodeEditor.style.height = 'auto'; // Reset to auto so scrollHeight calculates correctly
+    nodeEditor.style.fontSize = `${Math.max(12, 14 * state.zoom)}px`;
+
+    // Auto-resize textarea as we type
+    const autoResize = () => {
+        nodeEditor.style.height = 'auto';
+        nodeEditor.style.height = Math.max(editH * state.zoom, nodeEditor.scrollHeight + 5) + 'px';
+    };
+    nodeEditor.oninput = autoResize;
 
     setTimeout(() => {
         nodeEditor.focus();
         nodeEditor.select(); // Select all text for easy replacement
+        autoResize(); // Initial sizing
     }, 20);
 }
 
 function openEdgeEditor(edge, midX, midY) {
     if (state.editingItem && state.editingItem.id === edge.id) return;
     closeEditors();
+    state.selectedId = edge.id;
     state.editingItem = { type: 'edge', id: edge.id };
     edgeEditor.style.display = 'block';
     edgeEditor.value = edge.label || "";
 
     // Zoom-aware positioning for edge label (mini-node style)
     const rect = canvas.getBoundingClientRect();
-    const w = 120;
+    const w = 140;
+
+    // Position dynamically based on the edge label text
     edgeEditor.style.left = `${rect.left + midX * state.zoom - w / 2}px`;
     edgeEditor.style.top = `${rect.top + midY * state.zoom - 15}px`;
     edgeEditor.style.width = `${w}px`;
-    edgeEditor.style.height = `${30}px`;
-    edgeEditor.style.fontSize = `12px`;
+    edgeEditor.style.height = `${32}px`;
+    edgeEditor.style.fontSize = `13px`;
 
     setTimeout(() => {
         edgeEditor.focus();
@@ -540,15 +568,22 @@ function setupControls() {
     document.getElementById('zoom-out').onclick = () => { state.zoom *= 0.8; render(); };
     document.getElementById('reset-view').onclick = () => { state.zoom = 1; render(); };
     document.getElementById('clear-btn').onclick = () => { if (confirm("Clear Workspace?")) { nodes = []; edges = []; saveHistory(); render(); } };
-    document.getElementById('theme-toggle').onclick = () => { document.body.classList.toggle('dark-theme'); lucide.createIcons(); };
+    document.getElementById('theme-toggle').onclick = () => {
+        document.body.classList.toggle('light-theme');
+        document.body.classList.toggle('dark-theme');
+        lucide.createIcons();
+    };
 
     if (nameInput) {
         nameInput.oninput = (e) => { state.projectName = e.target.value || "My Flowchart"; persistToBrowser(); };
     }
 
     document.getElementById('save-project-btn').onclick = () => { persistToBrowser(); alert("Project Saved to Browser!"); };
+
+    const exportPdfBtn = document.getElementById('export-pdf-btn');
+    if (exportPdfBtn) exportPdfBtn.onclick = exportPDF;
+
     document.getElementById('export-btn').onclick = exportPNG;
-    document.getElementById('export-pdf-btn').onclick = exportPDF;
 
     document.getElementById('connector-tool').onclick = () => {
         state.activeTool = state.activeTool === 'connector' ? 'select' : 'connector';
@@ -574,17 +609,56 @@ function setupDragAndDrop() {
 
 async function exportPDF() {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'px', format: [container.clientWidth, container.clientHeight] });
-    const el = await html2canvas(container, { backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-canvas'), scale: 2 });
-    doc.addImage(el.toDataURL('image/png'), 'PNG', 0, 0, container.clientWidth, container.clientHeight);
-    doc.save(`${state.projectName.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+
+    // Unselect to hide glowing borders in export
+    const oldSelected = state.selectedId;
+    state.selectedId = null;
+    closeEditors();
+    render();
+
+    try {
+        const dataUrl = await domtoimage.toPng(container, {
+            bgcolor: getComputedStyle(document.body).getPropertyValue('--bg-canvas').trim(),
+            width: container.clientWidth,
+            height: container.clientHeight,
+            style: { transform: 'scale(1)', transformOrigin: 'top left' }
+        });
+
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'px', format: [container.clientWidth, container.clientHeight] });
+        doc.addImage(dataUrl, 'PNG', 0, 0, container.clientWidth, container.clientHeight);
+        doc.save(`${state.projectName.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+    } catch (e) {
+        console.error("PDF Export Error: ", e);
+        alert("Export failed. Please try again.");
+    } finally {
+        state.selectedId = oldSelected;
+        render();
+    }
 }
 
 function exportPNG() {
-    html2canvas(container, { backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-canvas'), scale: 2 }).then(cv => {
+    // Unselect to hide glowing borders in export
+    const oldSelected = state.selectedId;
+    state.selectedId = null;
+    closeEditors();
+    render();
+
+    domtoimage.toPng(container, {
+        bgcolor: getComputedStyle(document.body).getPropertyValue('--bg-canvas').trim(),
+        width: container.clientWidth,
+        height: container.clientHeight,
+        style: { transform: 'scale(1)', transformOrigin: 'top left' }
+    }).then(dataUrl => {
         const link = document.createElement('a');
         link.download = `${state.projectName.toLowerCase().replace(/\s+/g, '-')}.png`;
-        link.href = cv.toDataURL(); link.click();
+        link.href = dataUrl;
+        link.click();
+    }).catch(e => {
+        console.error("PNG Export Error: ", e);
+        alert("Export failed. Please try again.");
+    }).finally(() => {
+        state.selectedId = oldSelected;
+        render();
     });
 }
 
