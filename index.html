@@ -39,7 +39,9 @@
             </div>
 
             <!-- Floating UI Top Dock (Branding & Global Actions) -->
-            <header class="hud-top-bar glass-panel">
+            <button id="toggle-header-btn" class="toggle-header-btn" title="Toggle Header"><i
+                    data-lucide="chevron-up"></i></button>
+            <header class="hud-top-bar glass-panel" id="top-bar">
                 <div class="hud-brand">
                     <div class="logo-orb"></div>
                     <h1>flowmaker<span>X</span></h1>
@@ -70,16 +72,33 @@
             <!-- Floating UI Left Dock (Tools) -->
             <aside class="hud-left-dock glass-panel">
                 <div class="tool-group">
-                    <span class="tool-label">Nodes</span>
+                    <span class="tool-label">Primary</span>
                     <div class="palette-grid">
-                        <div class="palette-item" draggable="true" data-type="lead-source" title="Source Node">
-                            <div class="icon-wrap source-wrap"><i data-lucide="plus-circle"></i></div>
+                        <div class="palette-item" draggable="true" data-type="lead-source" title="Trigger / Source">
+                            <div class="icon-wrap source-wrap"><i data-lucide="zap"></i></div>
                         </div>
                         <div class="palette-item" draggable="true" data-type="action" title="Process Node">
                             <div class="icon-wrap process-wrap"><i data-lucide="box"></i></div>
                         </div>
                         <div class="palette-item" draggable="true" data-type="decision" title="Decision Node">
-                            <div class="icon-wrap decision-wrap"><i data-lucide="diamond"></i></div>
+                            <div class="icon-wrap decision-wrap"><i data-lucide="git-merge"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider-horizontal"></div>
+
+                <div class="tool-group">
+                    <span class="tool-label">Advanced</span>
+                    <div class="palette-grid">
+                        <div class="palette-item" draggable="true" data-type="database" title="Database">
+                            <div class="icon-wrap database-wrap"><i data-lucide="database"></i></div>
+                        </div>
+                        <div class="palette-item" draggable="true" data-type="api" title="API Endpoint">
+                            <div class="icon-wrap api-wrap"><i data-lucide="webhook"></i></div>
+                        </div>
+                        <div class="palette-item" draggable="true" data-type="user" title="User Input">
+                            <div class="icon-wrap user-wrap"><i data-lucide="user"></i></div>
                         </div>
                     </div>
                 </div>
