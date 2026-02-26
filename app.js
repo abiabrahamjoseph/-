@@ -12,6 +12,7 @@ let nodes = [];
 let edges = [];
 let historyStack = [];
 let redoStack = [];
+let currentProjectId = 'default';
 
 // Interaction Hierarchy
 const InteractionMode = {
@@ -45,6 +46,10 @@ const edgeEditor = document.getElementById('edge-editor');
 const zoomLevelText = document.getElementById('zoom-level');
 const nodeCountText = document.getElementById('node-count');
 const nameInput = document.getElementById('project-name-input');
+const projectMenuBtn = document.getElementById('project-menu-btn');
+const projectMenuDropdown = document.getElementById('project-menu-dropdown');
+const projectList = document.getElementById('project-list');
+const newProjectBtn = document.getElementById('new-project-btn');
 
 /**
  * Initialization
@@ -55,24 +60,8 @@ function init() {
     setupControls();
     setupDragAndDrop();
 
-    // Load from LocalStorage or Default
-    const saved = localStorage.getItem('flowmaker_pro_x_v11');
-    if (saved) {
-        try {
-            const data = JSON.parse(saved);
-            nodes = data.nodes || [];
-            edges = data.edges || [];
-            state.projectName = data.projectName || "My Flowchart";
-            if (nameInput) nameInput.value = state.projectName;
-        } catch (e) { console.error("Load failed", e); }
-    }
-
-    if (nodes.length === 0) {
-        createNode('lead-source', 320, 150, "Start Source");
-    }
-
-    saveHistory();
-    render();
+    loadProjectIndex();
+    loadProject(currentProjectId);
 
     window.addEventListener('resize', render);
     lucide.createIcons();
@@ -95,11 +84,152 @@ function snap(val) {
 }
 
 /**
- * Data Operations
+ * Multi-Project Data Operations
  */
+let projectIndex = [{ id: 'default', name: 'My Flowchart' }];
+
+function loadProjectIndex() {
+    const savedIndex = localStorage.getItem('flowmaker_projects_index');
+    if (savedIndex) {
+        try {
+            projectIndex = JSON.parse(savedIndex);
+        } catch (e) { console.error("Index load failed", e); }
+    } else {
+        // Fallback for migrating old users seamlessly
+        const oldData = localStorage.getItem('flowmaker_pro_x_v11');
+        if (oldData) {
+            try {
+                const pn = JSON.parse(oldData).projectName || 'My Flowchart';
+                projectIndex = [{ id: 'default', name: pn }];
+                localStorage.setItem('flowmaker_projects_index', JSON.stringify(projectIndex));
+                localStorage.setItem('flowmaker_pro_x_v11_default', oldData);
+            } catch (e) { }
+        }
+    }
+
+    // Fallback if somehow empty
+    if (projectIndex.length === 0) {
+        projectIndex = [{ id: 'default', name: 'My Flowchart' }];
+    }
+
+    const lastActive = localStorage.getItem('flowmaker_active_project');
+    if (lastActive && projectIndex.find(p => p.id === lastActive)) {
+        currentProjectId = lastActive;
+    } else {
+        currentProjectId = projectIndex[0].id;
+    }
+
+    renderProjectMenu();
+}
+
+function loadProject(id) {
+    currentProjectId = id;
+    localStorage.setItem('flowmaker_active_project', id);
+
+    nodes = [];
+    edges = [];
+    state.selectedId = null;
+    historyStack = [];
+    redoStack = [];
+    state.zoom = 1;
+
+    const projData = localStorage.getItem(`flowmaker_pro_x_v11_${id}`);
+    if (projData) {
+        try {
+            const data = JSON.parse(projData);
+            nodes = data.nodes || [];
+            edges = data.edges || [];
+            state.projectName = data.projectName || "My Flowchart";
+        } catch (e) { console.error("Load failed", e); }
+    } else {
+        const pInfo = projectIndex.find(p => p.id === id);
+        state.projectName = pInfo ? pInfo.name : "My Flowchart";
+        createNode('lead-source', 320, 150, "Start Source");
+    }
+
+    if (nameInput) nameInput.value = state.projectName;
+    saveHistory();
+    render();
+    renderProjectMenu(); // to update active state
+}
+
 function persistToBrowser() {
     const data = JSON.stringify({ nodes, edges, projectName: state.projectName });
-    localStorage.setItem('flowmaker_pro_x_v11', data);
+    localStorage.setItem(`flowmaker_pro_x_v11_${currentProjectId}`, data);
+
+    // Update index name if changed
+    const pIdx = projectIndex.findIndex(p => p.id === currentProjectId);
+    if (pIdx !== -1) {
+        projectIndex[pIdx].name = state.projectName;
+        localStorage.setItem('flowmaker_projects_index', JSON.stringify(projectIndex));
+        renderProjectMenu();
+    }
+}
+
+function createNewProject() {
+    const id = `proj_${Date.now()}`;
+    const name = `New Project ${projectIndex.length + 1}`;
+    projectIndex.push({ id, name });
+    localStorage.setItem('flowmaker_projects_index', JSON.stringify(projectIndex));
+    loadProject(id);
+    if (projectMenuDropdown) projectMenuDropdown.classList.add('hidden');
+}
+
+function deleteProject(id) {
+    if (projectIndex.length <= 1) {
+        alert("Cannot delete the last remaining project.");
+        return;
+    }
+
+    if (confirm("Are you sure you want to delete this project permanently?")) {
+        projectIndex = projectIndex.filter(p => p.id !== id);
+        localStorage.setItem('flowmaker_projects_index', JSON.stringify(projectIndex));
+        localStorage.removeItem(`flowmaker_pro_x_v11_${id}`);
+
+        if (currentProjectId === id) {
+            loadProject(projectIndex[0].id);
+        } else {
+            renderProjectMenu();
+        }
+    }
+}
+
+function renderProjectMenu() {
+    if (!projectList) return;
+    projectList.innerHTML = '';
+
+    projectIndex.forEach(proj => {
+        const li = document.createElement('li');
+        li.className = `project-item ${proj.id === currentProjectId ? 'active' : ''}`;
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'project-item-name';
+        nameSpan.textContent = proj.name;
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'project-delete-btn';
+        delBtn.innerHTML = '<i data-lucide="trash-2" width="16" height="16"></i>';
+
+        delBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteProject(proj.id);
+        };
+
+        li.onclick = () => {
+            if (proj.id !== currentProjectId) {
+                loadProject(proj.id);
+            }
+            projectMenuDropdown.classList.add('hidden');
+        };
+
+        li.append(nameSpan, delBtn);
+        projectList.appendChild(li);
+    });
+
+    // Need to re-create icons for the dynamically injected ones
+    if (window.lucide) {
+        setTimeout(() => lucide.createIcons(), 10);
+    }
 }
 
 function saveHistory() {
@@ -656,7 +786,30 @@ function setupControls() {
     }
 
     if (nameInput) {
-        nameInput.oninput = (e) => { state.projectName = e.target.value || "My Flowchart"; persistToBrowser(); };
+        nameInput.oninput = (e) => {
+            state.projectName = e.target.value || "My Flowchart";
+            persistToBrowser();
+        };
+    }
+
+    if (projectMenuBtn && projectMenuDropdown) {
+        projectMenuBtn.onclick = (e) => {
+            e.stopPropagation();
+            projectMenuDropdown.classList.toggle('hidden');
+            renderProjectMenu(); // Refresh
+        };
+
+        // Hide dropdown when clicking outside
+        container.addEventListener('mousedown', () => {
+            projectMenuDropdown.classList.add('hidden');
+        });
+    }
+
+    if (newProjectBtn) {
+        newProjectBtn.onclick = (e) => {
+            e.stopPropagation();
+            createNewProject();
+        };
     }
 
     document.getElementById('save-project-btn').onclick = () => { persistToBrowser(); alert("Project Saved to Browser!"); };
