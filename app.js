@@ -133,9 +133,24 @@ function applyState(data) {
 
 function createNode(type, x, y, label) {
     const id = `node-${Date.now()}`;
-    const node = { id, type, x: snap(x), y: snap(y), width: 160, height: 60, label };
-    if (type === 'decision') { node.width = 160; node.height = 120; }
-    else if (type === 'lead-source') { node.width = 180; node.height = 44; }
+    // Dynamic defaults per type
+    let w = 160, h = 60;
+    if (type === 'decision') { w = 160; h = 120; }
+    else if (type === 'lead-source') { w = 180; h = 50; }
+    else if (type === 'database') { w = 160; h = 70; }
+    else if (type === 'api') { w = 180; h = 50; }
+    else if (type === 'user') { w = 140; h = 60; }
+
+    // Check if label was provided, if not populate default
+    if (!label) {
+        label = type === 'lead-source' ? 'Trigger' :
+            type === 'database' ? 'Database' :
+                type === 'api' ? 'API Request' :
+                    type === 'user' ? 'User Input' :
+                        type.charAt(0).toUpperCase() + type.slice(1);
+    }
+
+    const node = { id, type, x: snap(x), y: snap(y), width: w, height: h, label };
     nodes.push(node);
     return node;
 }
@@ -192,6 +207,14 @@ function renderNodes() {
             shape.setAttribute("width", node.width);
             shape.setAttribute("height", node.height);
             shape.setAttribute("class", "node-rect");
+            // Beautiful tailored shapes per node type
+            if (node.type === 'user' || node.type === 'lead-source' || node.type === 'api') {
+                shape.setAttribute("rx", Math.min(node.width, node.height) / 2);
+                shape.setAttribute("ry", Math.min(node.width, node.height) / 2);
+            } else {
+                shape.setAttribute("rx", 12);
+                shape.setAttribute("ry", 12);
+            }
         }
 
         let fX = 0, fY = 0, fW = node.width, fH = node.height;
@@ -574,6 +597,23 @@ function setupControls() {
         lucide.createIcons();
     };
 
+    const header = document.getElementById('top-bar');
+    const toggleBtn = document.getElementById('toggle-header-btn');
+    if (header && toggleBtn) {
+        let isHeaderHidden = false;
+        toggleBtn.onclick = () => {
+            isHeaderHidden = !isHeaderHidden;
+            if (isHeaderHidden) {
+                header.classList.add('hidden');
+                toggleBtn.innerHTML = '<i data-lucide="chevron-down"></i>';
+            } else {
+                header.classList.remove('hidden');
+                toggleBtn.innerHTML = '<i data-lucide="chevron-up"></i>';
+            }
+            lucide.createIcons();
+        };
+    }
+
     if (nameInput) {
         nameInput.oninput = (e) => { state.projectName = e.target.value || "My Flowchart"; persistToBrowser(); };
     }
@@ -600,8 +640,7 @@ function setupDragAndDrop() {
     container.ondrop = (e) => {
         const type = e.dataTransfer.getData('type');
         const coords = getSVGCoords(e);
-        const label = type === 'lead-source' ? 'Source' : type.charAt(0).toUpperCase() + type.slice(1);
-        createNode(type, coords.x - 80, coords.y - 20, label);
+        createNode(type, coords.x - 80, coords.y - 20, null); // Label resolved internally
         saveHistory();
         render();
     };
