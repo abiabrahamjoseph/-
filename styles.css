@@ -278,6 +278,110 @@ body.light-theme .hud-input:hover {
     background: rgba(0, 0, 0, 0.03);
 }
 
+/* Projects Menu Dropdown */
+.hud-project-info {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.project-menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    border-radius: var(--radius-lg);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 2000;
+    transition: var(--transition-snappy);
+    opacity: 1;
+    pointer-events: auto;
+    transform-origin: top center;
+}
+
+.project-menu.hidden {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(0.9);
+    pointer-events: none;
+}
+
+.menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+}
+
+.menu-header h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.project-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.project-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.project-item:hover {
+    background: var(--bg-panel-hover);
+}
+
+.project-item.active {
+    background: rgba(168, 85, 247, 0.15);
+    /* Accent Glow */
+    border: 1px solid var(--accent-primary);
+}
+
+.project-item-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.project-delete-btn {
+    opacity: 0;
+    color: var(--accent-danger);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    transition: var(--transition-smooth);
+}
+
+.project-item:hover .project-delete-btn {
+    opacity: 1;
+}
+
+.project-delete-btn:hover {
+    transform: scale(1.1);
+}
+
 .hud-global-actions {
     display: flex;
     align-items: center;
