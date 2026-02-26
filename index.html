@@ -48,8 +48,23 @@
                 </div>
 
                 <div class="hud-project-info">
+                    <button id="project-menu-btn" class="btn-subtle" title="Manage Projects">
+                        <i data-lucide="folder"></i>
+                    </button>
                     <input type="text" id="project-name-input" class="hud-input" placeholder="Project Name..."
                         value="My Flowchart">
+
+                    <!-- Projects Dropdown Menu -->
+                    <div id="project-menu-dropdown" class="project-menu hidden glass-panel">
+                        <div class="menu-header">
+                            <h3>Your Projects</h3>
+                            <button id="new-project-btn" class="btn-icon"><i data-lucide="plus"></i></button>
+                        </div>
+                        <div class="divider-horizontal"></div>
+                        <ul id="project-list" class="project-list">
+                            <!-- Project items will be injected here -->
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="hud-global-actions">
