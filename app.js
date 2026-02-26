@@ -140,6 +140,8 @@ function createNode(type, x, y, label) {
     else if (type === 'database') { w = 160; h = 70; }
     else if (type === 'api') { w = 180; h = 50; }
     else if (type === 'user') { w = 140; h = 60; }
+    else if (type === 'document') { w = 140; h = 80; }
+    else if (type === 'cloud') { w = 160; h = 100; }
 
     // Check if label was provided, if not populate default
     if (!label) {
@@ -147,7 +149,9 @@ function createNode(type, x, y, label) {
             type === 'database' ? 'Database' :
                 type === 'api' ? 'API Request' :
                     type === 'user' ? 'User Input' :
-                        type.charAt(0).toUpperCase() + type.slice(1);
+                        type === 'document' ? 'Document' :
+                            type === 'cloud' ? 'Cloud' :
+                                type.charAt(0).toUpperCase() + type.slice(1);
     }
 
     const node = { id, type, x: snap(x), y: snap(y), width: w, height: h, label };
@@ -202,6 +206,24 @@ function renderNodes() {
             const hh = node.height / 2;
             shape.setAttribute("points", `0,${hh} ${hw},0 ${node.width},${hh} ${hw},${node.height}`);
             shape.setAttribute("class", "node-diamond");
+        } else if (node.type === 'document') {
+            shape = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const w = node.width;
+            const h = node.height;
+            shape.setAttribute("d", `M 0 0 L ${w} 0 L ${w} ${h - 15} Q ${w * 0.75} ${h}, ${w * 0.5} ${h - 15} T 0 ${h - 15} Z`);
+            shape.setAttribute("class", "node-path");
+        } else if (node.type === 'cloud') {
+            shape = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const w = node.width;
+            const h = node.height;
+            // Approximate cloud bounding box scaling
+            shape.setAttribute("d", `M ${w * 0.2} ${h * 0.5} 
+                C ${w * 0.2} ${h * 0.2}, ${w * 0.5} ${h * 0.1}, ${w * 0.6} ${h * 0.3} 
+                C ${w * 0.8} ${h * 0.2}, ${w} ${h * 0.4}, ${w * 0.9} ${h * 0.6}
+                C ${w} ${h * 0.8}, ${w * 0.7} ${h}, ${w * 0.5} ${h * 0.9}
+                C ${w * 0.3} ${h}, 0 ${h * 0.8}, ${w * 0.1} ${h * 0.6}
+                C 0 ${h * 0.4}, ${w * 0.2} ${h * 0.3}, ${w * 0.2} ${h * 0.5} Z`);
+            shape.setAttribute("class", "node-path");
         } else {
             shape = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             shape.setAttribute("width", node.width);
@@ -609,6 +631,25 @@ function setupControls() {
             } else {
                 header.classList.remove('hidden');
                 toggleBtn.innerHTML = '<i data-lucide="chevron-up"></i>';
+            }
+            lucide.createIcons();
+        };
+    }
+
+    const sidebar = document.getElementById('left-dock');
+    const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+    if (sidebar && toggleSidebarBtn) {
+        let isSidebarHidden = false;
+        toggleSidebarBtn.onclick = () => {
+            isSidebarHidden = !isSidebarHidden;
+            if (isSidebarHidden) {
+                sidebar.classList.add('hidden');
+                toggleSidebarBtn.classList.add('sidebar-hidden');
+                toggleSidebarBtn.innerHTML = '<i data-lucide="chevron-right"></i>';
+            } else {
+                sidebar.classList.remove('hidden');
+                toggleSidebarBtn.classList.remove('sidebar-hidden');
+                toggleSidebarBtn.innerHTML = '<i data-lucide="chevron-left"></i>';
             }
             lucide.createIcons();
         };
