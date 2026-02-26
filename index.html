@@ -70,7 +70,9 @@
             </header>
 
             <!-- Floating UI Left Dock (Tools) -->
-            <aside class="hud-left-dock glass-panel">
+            <button id="toggle-sidebar-btn" class="toggle-sidebar-btn" title="Toggle Sidebar"><i
+                    data-lucide="chevron-left"></i></button>
+            <aside class="hud-left-dock glass-panel" id="left-dock">
                 <div class="tool-group">
                     <span class="tool-label">Primary</span>
                     <div class="palette-grid">
@@ -99,6 +101,20 @@
                         </div>
                         <div class="palette-item" draggable="true" data-type="user" title="User Input">
                             <div class="icon-wrap user-wrap"><i data-lucide="user"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider-horizontal"></div>
+
+                <div class="tool-group">
+                    <span class="tool-label">Shapes</span>
+                    <div class="palette-grid">
+                        <div class="palette-item" draggable="true" data-type="document" title="Document">
+                            <div class="icon-wrap document-wrap"><i data-lucide="file-text"></i></div>
+                        </div>
+                        <div class="palette-item" draggable="true" data-type="cloud" title="Cloud">
+                            <div class="icon-wrap cloud-wrap"><i data-lucide="cloud"></i></div>
                         </div>
                     </div>
                 </div>
